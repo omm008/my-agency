@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react"; // 1. Import lazy & Suspense
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import Lenis from "lenis";
@@ -9,62 +9,66 @@ import Footer from "./components/layout/Footer";
 import Preloader from "./components/ui/Preloader";
 import CustomCursor from "./components/ui/CustomCursor";
 
-// Pages
-import Home from "./pages/Home";
-import Work from "./pages/Work";
-import Services from "./pages/Services";
-import Contact from "./pages/Contact";
+// 2. LAZY LOAD PAGES
+// Instead of import Home from "./pages/Home";
+const Home = lazy(() => import("./pages/Home"));
+const Work = lazy(() => import("./pages/Work"));
+const Services = lazy(() => import("./pages/Services"));
+const Contact = lazy(() => import("./pages/Contact"));
 
 function App() {
-  const [isLoading, setIsLoading] = useState(true);
+  const isBot =
+    typeof navigator !== "undefined" &&
+    /bot|crawl|spider|google|bing|yandex|duckduckgo|gpt/i.test(
+      navigator.userAgent
+    );
+
+  const [isLoading, setIsLoading] = useState(!isBot);
   const location = useLocation();
-  // ... inside the App function, add this useEffect:
+
   useEffect(() => {
-    // Initialize Lenis
+    if (isBot) return;
     const lenis = new Lenis({
-      duration: 1.2, // The weight of the scroll (1.2s to stop)
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Custom easing curve
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
     });
-
-    // The Scroll Loop
     function raf(time) {
       lenis.raf(time);
       requestAnimationFrame(raf);
     }
     requestAnimationFrame(raf);
+    return () => lenis.destroy();
+  }, [isBot]);
 
-    // Cleanup
-    return () => {
-      lenis.destroy();
-    };
-  }, []);
-
-  // Scroll to top on route change
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location]);
 
   return (
     <div className="min-h-screen bg-brand-black text-white selection:bg-brand-blue selection:text-white flex flex-col">
-      <CustomCursor /> {/* <--- Add this */}
-      {/* 1. Global Preloader (Runs once on first load) */}
-      <AnimatePresence mode="wait">
+      <CustomCursor />
+
+      <AnimatePresence>
         {isLoading && <Preloader onComplete={() => setIsLoading(false)} />}
       </AnimatePresence>
-      {/* 2. Global Navbar */}
+
       <Navbar />
-      {/* 3. Page Content (Switches based on URL) */}
+
       <div className="flex-grow">
-        <Routes>
-          <Route path="/" element={<Home isLoaded={!isLoading} />} />
-          <Route path="/work" element={<Work />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/contact" element={<Contact />} />
-          {/* Add /contact here later */}
-        </Routes>
+        {/* 3. Wrap Routes in Suspense. 
+            The fallback=null means "show nothing while the next page loads".
+            Since your pages load fast, this is usually invisible. */}
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="/" element={<Home isLoaded={!isLoading} />} />
+            <Route path="/work" element={<Work />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/contact" element={<Contact />} />
+          </Routes>
+        </Suspense>
       </div>
-      {/* 4. Global Footer */}
+
       <Footer />
     </div>
   );

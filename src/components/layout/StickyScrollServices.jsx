@@ -14,7 +14,7 @@ const services = [
     id: 0,
     title: "Web Architecture",
     description:
-      "We don't do templates. We engineer custom Next.js systems that load in 0.4s and convert traffic into revenue.",
+      "We don't do templates. We engineer custom React.js systems that load in 0.4s and convert traffic into revenue.",
     icon: <Globe size={32} />,
     stats: "99/100 Speed Score",
     img: new URL("../../assets/service-icons/webdev-obj.png", import.meta.url)

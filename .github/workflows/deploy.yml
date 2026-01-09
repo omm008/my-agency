@@ -1,0 +1,42 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main # OR 'master' - check which branch you use!
+
+jobs:
+  web-deploy:
+    name: 🎉 Deploy
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Get the latest code
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+
+      # 2. Install Node.js
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      # 3. Install dependencies and Build
+      - name: 🔨 Build Project
+        run: |
+          npm ci
+          npm run build
+
+      # 4. Upload to Hostinger via FTP
+      - name: 📂 Sync files
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # The local folder Vite builds to
+          local-dir: ./dist/
+          # The remote folder on Hostinger (usually public_html)
+          server-dir: ./public_html/
+          # DANGEROUS: Set to true if you want to delete old files on server not present in build
+          dangerous-clean-slate: true
