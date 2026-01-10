@@ -6,7 +6,7 @@ import { Helmet } from "react-helmet-async";
 
 const Contact = () => {
   // 1. Define the WhatsApp Logic here too
-  const phoneNumber = "916267823272"; // Replace with real number
+  const phoneNumber = import.meta.env.VITE_WTSP_PHONE; // Replace with real number
   const message =
     "Hii WebAutomy !! Can i get a free quotation of your services";
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(

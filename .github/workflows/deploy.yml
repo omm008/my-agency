@@ -26,6 +26,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_WTSP_PHONE: ${{ secrets.VITE_WTSP_PHONE }}
 
       - name: Deploy to Hostinger via SFTP
         uses: appleboy/scp-action@v0.1.7
