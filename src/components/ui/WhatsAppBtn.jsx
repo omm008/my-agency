@@ -7,7 +7,7 @@ const WhatsAppBtn = () => {
   // YOUR DETAILS
   const phoneNumber = "916267823272";
   const message =
-    "Hii WebAutomy !, Can i get a free quotation of your services";
+    "Hii WebAutomy !! Can i get a free quotation of your services";
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
     message
   )}`;
