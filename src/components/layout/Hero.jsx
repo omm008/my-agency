@@ -1,14 +1,26 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React from "react";
+import { motion, useMotionValue, useMotionTemplate, useSpring } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, Code, Zap, BarChart } from "lucide-react";
 
 const Hero = ({ isLoaded }) => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  // Smooth out the mouse movement
+  const smoothX = useSpring(mouseX, { damping: 50, stiffness: 400 });
+  const smoothY = useSpring(mouseY, { damping: 50, stiffness: 400 });
+
+  const background = useMotionTemplate`radial-gradient(
+    500px circle at ${smoothX}px ${smoothY}px,
+    rgba(163, 72, 90, 0.25),
+    transparent 80%
+  )`;
 
   const handleMouseMove = (e) => {
     const { clientX, clientY } = e;
-    setMousePosition({ x: clientX, y: clientY });
+    mouseX.set(clientX);
+    mouseY.set(clientY);
   };
 
   return (
@@ -32,15 +44,9 @@ const Hero = ({ isLoaded }) => {
       {/* --- BACKGROUND EFFECTS --- */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
 
-      <div
+      <motion.div
         className="pointer-events-none fixed inset-0 z-30 transition-opacity duration-300"
-        style={{
-          background: `radial-gradient(
-            500px circle at ${mousePosition.x}px ${mousePosition.y}px,
-            rgba(163, 72, 90, 0.25),
-            transparent 80%
-          )`,
-        }}
+        style={{ background }}
       />
 
       {/* --- CONTENT --- */}

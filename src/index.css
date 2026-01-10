@@ -15,10 +15,7 @@
   background-color: #d90429; /* Your new Red */
   color: #ffffff;
 }
-/* Hide Scrollbar for Chrome, Safari and Opera (cleaner look) */
-::-webkit-scrollbar {
-  display: none;
-}
+
 @media (hover: none) and (pointer: coarse) {
   .custom-cursor {
     display: none !important;
@@ -43,7 +40,6 @@
 /* Hide scrollbar for IE, Edge and Firefox */
 html {
   -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
   scroll-behavior: smooth; /* Essential for one-page navigation */
   -webkit-tap-highlight-color: transparent;
 }
