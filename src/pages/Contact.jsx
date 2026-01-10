@@ -23,10 +23,10 @@ const Contact = () => {
             animate={{ opacity: 1, y: 0 }}
             className="text-5xl md:text-7xl font-bold tracking-tighter mb-6"
           >
-            Let's <span className="text-brand-blue">Scale.</span>
+            Start Your<span className="text-brand-blue">Free</span> Consultation
           </motion.h1>
           <p className="text-neutral-400 text-xl">
-            Ready to dominate your market? Fill out the application below.
+            Answer a few quick questions and we'll handle the rest.
           </p>
         </div>
 

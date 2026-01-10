@@ -118,9 +118,10 @@ const DiscoveryWizard = () => {
               className="space-y-8"
             >
               <h2 className="text-3xl md:text-4xl font-bold text-white text-center">
-                Protocol Initialization. <br />
+                What do you need help with?
+                <br />
                 <span className="text-neutral-500 text-xl font-normal">
-                  Select required modules.
+                  Pick one or more options.
                 </span>
               </h2>
 
@@ -153,9 +154,12 @@ const DiscoveryWizard = () => {
                 <button
                   onClick={() => setStep(2)}
                   disabled={formData.selectedServices.length === 0}
-                  className="flex items-center gap-2 text-brand-blue font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:gap-4 transition-all"
+                  className="group px-8 py-4   rounded-full  relative flex items-center gap-2 bg-white text-black font-bold overflow-hidden transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed hover:gap-4 "
                 >
-                  Confirm Selection <ChevronRight />
+                  <span className="relative z-10 flex items-center gap-2">
+                    Confirm Selection <ChevronRight />
+                  </span>
+                  <div className="absolute inset-0 bg-brand-blue scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
                 </button>
               </div>
             </motion.div>
@@ -171,9 +175,9 @@ const DiscoveryWizard = () => {
               className="space-y-8"
             >
               <h2 className="text-3xl md:text-4xl font-bold text-white text-center">
-                Define Objective. <br />
+                What's your main goal? <br />
                 <span className="text-neutral-500 text-xl font-normal">
-                  What is the primary target?
+                  What outcome do you want?
                 </span>
               </h2>
 
@@ -211,9 +215,9 @@ const DiscoveryWizard = () => {
               className="space-y-8 max-w-md mx-auto w-full"
             >
               <h2 className="text-3xl md:text-4xl font-bold text-white text-center">
-                Final Authorization. <br />
+                How can we contact you? <br />
                 <span className="text-neutral-500 text-xl font-normal">
-                  Where do we send the roadmap?
+                  No spam, just important updates.
                 </span>
               </h2>
 
