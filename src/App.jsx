@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/layout/Footer";
 import Preloader from "./components/ui/Preloader";
 import CustomCursor from "./components/ui/CustomCursor";
+import WhatsAppBtn from "./components/ui/WhatsAppBtn";
 
 // 2. LAZY LOAD PAGES
 // Instead of import Home from "./pages/Home";
@@ -66,6 +67,8 @@ function App() {
             <Route path="/services" element={<Services />} />
             <Route path="/contact" element={<Contact />} />
           </Routes>
+
+          <WhatsAppBtn />
         </Suspense>
       </div>
 
