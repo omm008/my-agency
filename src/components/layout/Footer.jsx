@@ -69,7 +69,7 @@ const Footer = () => {
             <h4 className="font-bold text-lg mb-6">Connect</h4>
             <div className="flex gap-4 mb-6">
               <SocialIcon
-                href="https://www.linkedin.com/in/webautomy-media-21aa863a2/"
+                href="https://www.linkedin.com/company/webautomy/"
                 icon={<Linkedin size={20} />}
               />
 
@@ -79,7 +79,7 @@ const Footer = () => {
               />
 
               <SocialIcon
-                href="https://twitter.com/your-handle"
+                href="https://x.com/webautomy"
                 icon={<Twitter size={20} />}
               />
             </div>

@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
 const services = [
   {
     id: 0,
-    title: "Web Architecture",
+    title: "Web Design & Development",
     description:
       "We don't do templates. We engineer custom React.js systems that load in 0.4s and convert traffic into revenue.",
     icon: <Globe size={32} />,

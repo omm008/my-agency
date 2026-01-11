@@ -4,7 +4,7 @@ import {
   ArrowRight,
   Check,
   ChevronRight,
-  Code,
+  Earth,
   Globe,
   Zap,
   Loader2, // Added Loader icon
@@ -26,8 +26,8 @@ const DiscoveryWizard = () => {
   const [submitError, setSubmitError] = useState(null);
 
   const services = [
-    { id: "web", label: "Web Architecture", icon: <Globe size={24} /> },
-    { id: "seo", label: "GMB & SEO", icon: <Code size={24} /> },
+    { id: "web", label: "Website Designing", icon: <Globe size={24} /> },
+    { id: "seo", label: "GMB & SEO", icon: <Earth size={24} /> },
     { id: "auto", label: "WhatsApp Automation", icon: <Zap size={24} /> },
   ];
 
@@ -262,11 +262,11 @@ const DiscoveryWizard = () => {
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="animate-spin" /> Transmitting...
+                      <Loader2 className="animate-spin" /> Contacting...
                     </>
                   ) : (
                     <>
-                      Initialize Protocol <ArrowRight size={18} />
+                      Get in Touch <ArrowRight size={18} />
                     </>
                   )}
                 </button>
