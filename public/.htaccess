@@ -1,8 +1,14 @@
 <IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
-  RewriteRule ^index\.html$ - [L]
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteEngine On RewriteBase / #
+  ---------------------------------------------------- # 1. Force HTTPS #
+  ---------------------------------------------------- RewriteCond %{HTTPS} off
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301] #
+  ---------------------------------------------------- # 2. Force non-www #
+  ---------------------------------------------------- RewriteCond %{HTTP_HOST}
+  ^www\.webautomy\.com$ [NC] RewriteRule ^(.*)$ https://webautomy.com/$1
+  [L,R=301] # ---------------------------------------------------- # 3. React
+  SPA fallback (KEEP THIS LAST) #
+  ---------------------------------------------------- RewriteRule ^index\.html$
+  - [L] RewriteCond %{REQUEST_FILENAME} !-f RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule . /index.html [L]
 </IfModule>

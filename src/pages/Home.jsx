@@ -14,15 +14,17 @@ const Home = ({ isLoaded }) => {
           name="description"
           content="WebAutomy helps businesses grow with high-converting websites, Google Maps SEO, and automation solutions."
         />
+        <link rel="canonical" href="https://webautomy.com/" />
       </Helmet>
+
       <main>
         <Hero isLoaded={isLoaded} />
         <section className="max-w-3xl mx-auto px-4 mt-24 text-center">
-  <p className="text-neutral-600 text-sm leading-relaxed">
-    WebAutomy is a digital agency specializing in web design, SEO,
-    Google Maps optimization, and automation solutions for businesses.
-  </p>
-</section>
+          <p className="text-neutral-600 text-sm leading-relaxed">
+            WebAutomy is a digital agency specializing in web design, SEO,
+            Google Maps optimization, and automation solutions for businesses.
+          </p>
+        </section>
 
         <StickyScrollServices />
         <TransformationSlider />

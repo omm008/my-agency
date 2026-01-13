@@ -24,6 +24,7 @@ const Services = () => {
           name="description"
           content="Explore WebAutomy services including website development, Google Maps marketing, SEO, and WhatsApp automation."
         />
+        <link rel="canonical" href="https://webautomy.com/services" />
       </Helmet>
       <main className="bg-brand-black min-h-screen pt-32 pb-20 overflow-x-hidden">
         {/* --- HEADER --- */}

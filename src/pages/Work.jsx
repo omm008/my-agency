@@ -64,6 +64,7 @@ const Work = () => {
           name="description"
           content="See how WebAutomy has helped businesses grow with real results and performance-driven websites."
         />
+        <link rel="canonical" href="https://webautomy.com/work" />
       </Helmet>
 
       <main className="bg-brand-black pt-32 pb-20 px-4 min-h-screen">

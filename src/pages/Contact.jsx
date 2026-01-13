@@ -21,6 +21,7 @@ const Contact = () => {
           name="description"
           content="Contact WebAutomy to build a high-converting website and grow your business online."
         />
+        <link rel="canonical" href="https://webautomy.com/contact" />
       </Helmet>
 
       <main className="bg-brand-black min-h-screen pt-32 pb-20">
