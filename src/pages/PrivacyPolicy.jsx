@@ -18,6 +18,10 @@ const PrivacyPolicy = () => {
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-8">
             Privacy Policy
           </h1>
+          {/* Add this below the main <h1> heading in both files */}
+          <p className="text-neutral-500 text-sm mb-8">
+            Last Updated: January 24, 2026
+          </p>
 
           <p className="text-neutral-400 text-sm leading-relaxed mb-8">
             WebAutomy respects your privacy. This policy explains how we
@@ -75,13 +79,32 @@ const PrivacyPolicy = () => {
             </div>
 
             <div>
-              <h2 className="text-white font-semibold mb-2">Contact</h2>
-              <a
-                href="mailto:contact@webautomy.com?subject=Inquiry%20from%20WebAutomy%20Website"
-                className="text-white hover:text-brand-blue transition-colors"
-              >
-                contact@webautomy.com
-              </a>
+              <h2 className="text-white font-semibold mb-2">Contact Us</h2>
+              <p className="mb-4">
+                If you have any questions about this Privacy Policy, please
+                contact us:
+              </p>
+              <ul className="list-none space-y-2">
+                <li>
+                  <strong className="text-white">Email:</strong>{" "}
+                  <a
+                    href="mailto:contact@webautomy.com"
+                    className="hover:text-brand-blue"
+                  >
+                    contact@webautomy.com
+                  </a>
+                </li>
+                <li>
+                  <strong className="text-white">Registered Office:</strong>
+                  <br />
+                  WebAutomy (MSME Reg: UDYAM-MP-23-0090709)
+                  <br />
+                  {/* Yahan wahi same address daalna jo Udyam Certificate par hai */}
+                  House No 149, Lala Lajpat rai ward,
+                  <br />
+                  Manegaon ,Ranjhi, Jabalpur, Madhya Pradesh, India - 482005
+                </li>
+              </ul>
             </div>
           </section>
         </div>

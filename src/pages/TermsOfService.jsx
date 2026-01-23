@@ -18,6 +18,10 @@ const TermsOfService = () => {
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-8">
             Terms of Service
           </h1>
+          {/* Add this below the main <h1> heading in both files */}
+          <p className="text-neutral-500 text-sm mb-8">
+            Last Updated: January 24, 2026
+          </p>
 
           <p className="text-neutral-400 text-sm leading-relaxed mb-8">
             By accessing or using WebAutomy, you agree to the following terms.
@@ -70,7 +74,13 @@ const TermsOfService = () => {
 
             <div>
               <h2 className="text-white font-semibold mb-2">Governing Law</h2>
-              <p>These terms are governed by the laws of India.</p>
+              <p>
+                These terms shall be governed and construed in accordance with
+                the laws of
+                <strong> Madhya Pradesh, India</strong>, without regard to its
+                conflict of law provisions. Any disputes shall be subject to the
+                exclusive jurisdiction of the courts in Jabalpur.
+              </p>
             </div>
 
             <div>
