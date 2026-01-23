@@ -104,6 +104,11 @@ const Footer = () => {
               <br />
               All rights reserved.
             </p>
+            <p className="text-neutral-700 text-xs mt-2 border-t border-white/5 pt-2">
+              WebAutomy is a proprietary firm registered under <br />
+              MSME, Govt of India. <br />
+              (UDYAM-MP-24-0090709) {/* Yahan apna number daal dena */}
+            </p>
           </div>
         </div>
 

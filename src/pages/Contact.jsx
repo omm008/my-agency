@@ -10,7 +10,7 @@ const Contact = () => {
   const message =
     "Hii WebAutomy !! Can i get a free quotation of your services";
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-    message
+    message,
   )}`;
 
   return (
@@ -72,12 +72,18 @@ const Contact = () => {
           </a>
 
           {/* Location */}
+          {/* Location Section Fix */}
           <div className="bg-neutral-900/50 border border-white/5 p-8 rounded-2xl hover:border-red-500/50 transition-colors h-full">
             <div className="bg-red-500/20 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
               <MapPin className="text-red-500" size={24} />
             </div>
-            <h3 className="font-bold text-white mb-2">HQ</h3>
-            <p className="text-neutral-400 text-sm">Global Remote Team</p>
+            <h3 className="font-bold text-white mb-2">Registered Office</h3>
+            {/* Yahan apna EXACT Udyam Address daalna */}
+            <p className="text-neutral-400 text-xs leading-relaxed">
+              House No 149, Lala Lajpat rai ward, <br />
+              Manegaon ,Ranjhi, Jabalpur, <br />
+              Madhya Pradesh - 482005
+            </p>
           </div>
         </div>
       </main>
