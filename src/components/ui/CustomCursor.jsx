@@ -17,13 +17,14 @@ const CustomCursor = () => {
       });
     };
 
-    // Check if hovering over clickable elements
     const handleMouseOver = (e) => {
       if (
         e.target.tagName === "BUTTON" ||
         e.target.tagName === "A" ||
         e.target.closest("a") ||
-        e.target.closest("button")
+        e.target.closest("button") ||
+        e.target.tagName === "INPUT" || // Input fields ke liye bhi hover effect
+        e.target.tagName === "TEXTAREA"
       ) {
         setIsHovering(true);
       } else {
@@ -42,19 +43,22 @@ const CustomCursor = () => {
 
   return (
     <>
-      {/* 1. The Main Dot (Instant movement) */}
+      {/* 1. The Main Dot */}
       {!isBot && (
         <motion.div
-          className="fixed top-0 left-0 w-3 h-3 bg-brand-blue rounded-full pointer-events-none z-[9999] mix-blend-difference hidden md:block"
+          // 👇 CHANGE 1: 'mix-blend-difference' hata diya
+          // 👇 CHANGE 2: 'bg-brand-blue' ki jagah ek solid bright color (Cyan/White) ya 'bg-[#00a884]' (WhatsApp Green) try kar sakte ho dashboard ke liye
+          className="fixed top-0 left-0 w-3 h-3 bg-cyan-400 rounded-full pointer-events-none z-[9999] hidden md:block shadow-[0_0_10px_rgba(34,211,238,0.8)]"
           animate={{ x: mousePosition.x - 6, y: mousePosition.y - 6 }}
           transition={{ type: "tween", ease: "backOut", duration: 0 }}
         />
       )}
 
-      {/* 2. The Trailing Ring (Smooth lag) */}
+      {/* 2. The Trailing Ring */}
       {!isBot && (
         <motion.div
-          className="fixed top-0 left-0 border border-brand-blue rounded-full pointer-events-none z-[9998] hidden md:block"
+          // 👇 CHANGE 3: Ring ka z-index same rakha, bas border color bright kar diya
+          className="fixed top-0 left-0 border border-cyan-400/50 rounded-full pointer-events-none z-[9998] hidden md:block"
           animate={{
             x: mousePosition.x - (isHovering ? 24 : 16),
             y: mousePosition.y - (isHovering ? 24 : 16),
@@ -62,7 +66,7 @@ const CustomCursor = () => {
             height: isHovering ? 48 : 32,
             opacity: isHovering ? 1 : 0.5,
             backgroundColor: isHovering
-              ? "rgba(217, 4, 41, 0.1)"
+              ? "rgba(34, 211, 238, 0.1)" // Hover par light blue tint
               : "transparent",
           }}
           transition={{
