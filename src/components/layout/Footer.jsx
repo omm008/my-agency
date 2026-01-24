@@ -77,6 +77,14 @@ const Footer = () => {
                   Terms of Service
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/simulator"
+                  className="hover:text-brand-blue transition-colors"
+                >
+                  Simulator
+                </Link>
+              </li>
             </ul>
           </div>
 

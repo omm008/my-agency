@@ -2,32 +2,16 @@
     RewriteEngine On
     RewriteBase /
 
-    # ----------------------------------------------------
-    # 1. Force HTTPS
-    # (Agar koi http se aaye toh https par bhejo)
-    # ----------------------------------------------------
+    # 1. Force HTTPS for Subdomain
     RewriteCond %{HTTPS} off
     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-    # ----------------------------------------------------
-    # 2. Force non-www
-    # (Agar koi www.webautomy.com khole toh webautomy.com par bhejo)
-    # ----------------------------------------------------
-    RewriteCond %{HTTP_HOST} ^www\.webautomy\.com$ [NC]
-    RewriteRule ^(.*)$ https://webautomy.com/$1 [L,R=301]
-
-    # ----------------------------------------------------
-    # 3. React SPA Fallback (THE FIX)
-    # (Privacy Policy/Terms pages ko 404 hone se bachata hai)
-    # ----------------------------------------------------
+    # 2. React SPA Fallback (The Core Fix)
     # Agar request 'index.html' ke liye hai, toh kuch mat karo
     RewriteRule ^index\.html$ - [L]
 
-    # Agar request kiya gaya file server par asli mein nahi hai (!-f)
+    # Agar file ya directory nahi milti, toh index.html par bhejo
     RewriteCond %{REQUEST_FILENAME} !-f
-    # Aur agar wo directory bhi nahi hai (!-d)
     RewriteCond %{REQUEST_FILENAME} !-d
-    # Toh user ko wapas index.html par bhejo (React Router sambhal lega)
     RewriteRule . /index.html [L]
-
 </IfModule>

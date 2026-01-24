@@ -1,5 +1,5 @@
-import React, { useState, useEffect, lazy, Suspense } from "react"; // 1. Import lazy & Suspense
-import { Routes, Route, useLocation } from "react-router-dom";
+import React, { useState, useEffect, lazy, Suspense } from "react";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import Lenis from "lenis";
 
@@ -10,25 +10,56 @@ import Preloader from "./components/ui/Preloader";
 import CustomCursor from "./components/ui/CustomCursor";
 import WhatsAppBtn from "./components/ui/WhatsAppBtn";
 
-// 2. LAZY LOAD PAGES
-// Instead of import Home from "./pages/Home";
+// LAZY LOAD PAGES
 const Home = lazy(() => import("./pages/Home"));
 const Work = lazy(() => import("./pages/Work"));
 const Services = lazy(() => import("./pages/Services"));
 const Contact = lazy(() => import("./pages/Contact"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const Simulator = lazy(() => import("./pages/Simulator"));
 
 function App() {
+  // 1. Domain Check (Initialize once)
+  const [isAppDomain] = useState(() => {
+    return window.location.hostname.startsWith("app.");
+  });
+
+  // 2. Admin Loader Component
+  const DashboardLoader = () => (
+    <div className="flex h-screen items-center justify-center bg-[#111b21] text-[#00a884]">
+      <div className="animate-pulse font-bold tracking-widest">WEBAUTOMY</div>
+    </div>
+  );
+
+  // 3. 🛑 EARLY RETURN: Agar 'app.' domain hai, toh YAHIN se return ho jao.
+  // Isse Navbar, Footer, Cursor, Preloader kuch bhi load nahi hoga dashboard par.
+  if (isAppDomain) {
+    return (
+      <Suspense fallback={<DashboardLoader />}>
+        <Routes>
+          <Route path="/" element={<AdminDashboard />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </Suspense>
+    );
+  }
+
+  // ---------------------------------------------------------------
+  // 🌍 MAIN WEBSITE LOGIC (Ye code tabhi chalega jab domain 'app.' NAHI hai)
+  // ---------------------------------------------------------------
+
   const isBot =
     typeof navigator !== "undefined" &&
     /bot|crawl|spider|google|bing|yandex|duckduckgo|gpt/i.test(
-      navigator.userAgent
+      navigator.userAgent,
     );
 
   const [isLoading, setIsLoading] = useState(!isBot);
   const location = useLocation();
 
+  // Lenis Scroll
   useEffect(() => {
     if (isBot) return;
     const lenis = new Lenis({
@@ -44,6 +75,7 @@ function App() {
     return () => lenis.destroy();
   }, [isBot]);
 
+  // Scroll to Top on Route Change
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location]);
@@ -56,12 +88,10 @@ function App() {
         {isLoading && <Preloader onComplete={() => setIsLoading(false)} />}
       </AnimatePresence>
 
+      {/* Navbar sirf Main Website par dikhega */}
       <Navbar />
 
       <div className="flex-grow">
-        {/* 3. Wrap Routes in Suspense. 
-            The fallback=null means "show nothing while the next page loads".
-            Since your pages load fast, this is usually invisible. */}
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Home isLoaded={!isLoading} />} />
@@ -70,12 +100,14 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/simulator" element={<Simulator />} />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
-
-          <WhatsAppBtn />
         </Suspense>
       </div>
 
+      <WhatsAppBtn />
+      {/* Footer sirf Main Website par dikhega */}
       <Footer />
     </div>
   );
