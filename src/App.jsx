@@ -40,13 +40,16 @@ function App() {
   // Isse Navbar, Footer, Cursor, Preloader kuch bhi load nahi hoga dashboard par.
   if (isAppDomain) {
     return (
-      <Suspense fallback={<DashboardLoader />}>
-        <Routes>
-          <Route path="/" element={<AdminDashboard />} />
-          {/* Redirect ki jagah NotFound dikhao */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
+      <>
+        <CustomCursor /> {/* ✅ Added Here */}
+        <ToastContainer position="top-right" autoClose={3000} />{" "}
+        <Suspense fallback={<DashboardLoader />}>
+          <Routes>
+            <Route path="/" element={<AdminDashboard />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </>
     );
   }
 
