@@ -1,17 +1,15 @@
 <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
+  RewriteEngine On
+  
+  # Redirect http to https (Optional but recommended)
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-    # 1. Force HTTPS for Subdomain
-    RewriteCond %{HTTPS} off
-    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+  # Existing files/directories ko direct serve karein
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
 
-    # 2. React SPA Fallback (The Core Fix)
-    # Agar request 'index.html' ke liye hai, toh kuch mat karo
-    RewriteRule ^index\.html$ - [L]
-
-    # Agar file ya directory nahi milti, toh index.html par bhejo
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule . /index.html [L]
+  # Baki sab request ko index.html par "Rewrite" karein (Redirect nahi)
+  RewriteRule ^ index.html [L]
 </IfModule>

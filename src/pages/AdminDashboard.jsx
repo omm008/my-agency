@@ -1,6 +1,9 @@
 // src/pages/AdminDashboard.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "../lib/supabaseClient"; // ⚠️ Check path (lib/supabaseClient or just supabaseClient)
+import logo from "../assets/logo.png";
+import { toast } from "react-toastify";
+
 import {
   User,
   RefreshCcw,
@@ -9,19 +12,45 @@ import {
   MoreVertical,
   Phone,
   Paperclip,
+  Lock,
 } from "lucide-react";
 
 const AdminDashboard = () => {
+  // --- STATE ---
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [error, setError] = useState(""); // Error animation ke liye
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Dashboard States
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // 🆕 State for Input
   const [inputText, setInputText] = useState("");
-  const messagesEndRef = useRef(null); // Auto-scroll ke liye
 
-  // 1. Load Contacts
+  const messagesEndRef = useRef(null);
+
+  // --- 1. LOGIN LOGIC ---
+  const handleLogin = () => {
+    setIsLoading(true);
+    setError("");
+
+    // Thoda delay taaki "Checking..." feel aaye
+    setTimeout(() => {
+      if (passwordInput === "admin@webautomy") {
+        setIsAuthenticated(true);
+        fetchContacts();
+        toast.success("Access Granted");
+      } else {
+        setError("Access Denied: Invalid Credentials");
+        setIsLoading(false);
+        toast.error("Access Denied: Invalid Credentials");
+      }
+    }, 800);
+  };
+
+  // --- 2. DATA FETCHING ---
   const fetchContacts = async () => {
     const { data, error } = await supabase
       .from("contacts")
@@ -33,7 +62,6 @@ const AdminDashboard = () => {
     setLoading(false);
   };
 
-  // 2. Load Messages
   const fetchMessages = async (contactId) => {
     const { data, error } = await supabase
       .from("messages")
@@ -45,19 +73,18 @@ const AdminDashboard = () => {
     else setMessages(data || []);
   };
 
-  // 3. 🚀 HANDLE SEND MESSAGE (Simulation Logic)
+  // --- 3. SEND MESSAGE ---
   const handleSendMessage = async () => {
     if (!inputText.trim() || !selectedContact) return;
 
     const textToSend = inputText;
-    setInputText(""); // UI ko turant clear karo
+    setInputText("");
 
-    // A. Database mein save karo (Fake Outbound)
     const { error } = await supabase.from("messages").insert([
       {
         contact_id: selectedContact.id,
         content: textToSend,
-        direction: "outbound", // Yeh right side dikhega
+        direction: "outbound",
         status: "sent",
         created_at: new Date().toISOString(),
       },
@@ -67,38 +94,116 @@ const AdminDashboard = () => {
       console.error("Error sending message:", error);
       alert("Failed to send message locally.");
     } else {
-      // B. Message list refresh karo
       fetchMessages(selectedContact.id);
     }
   };
 
-  // 4. Handle Enter Key
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleSendMessage();
-    }
+    if (e.key === "Enter") handleSendMessage();
   };
 
-  // Auto-scroll to bottom when new message arrives
+  // --- 4. EFFECTS ---
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Initial Load & Polling
   useEffect(() => {
-    fetchContacts();
+    if (isAuthenticated) fetchContacts();
     const interval = setInterval(() => {
-      fetchContacts();
-      if (selectedContact) fetchMessages(selectedContact.id);
+      if (isAuthenticated) {
+        fetchContacts();
+        if (selectedContact) fetchMessages(selectedContact.id);
+      }
     }, 3000);
     return () => clearInterval(interval);
-  }, [selectedContact]);
+  }, [selectedContact, isAuthenticated]);
 
   const handleContactClick = (contact) => {
     setSelectedContact(contact);
     fetchMessages(contact.id);
   };
 
+  // ==========================================
+  // 💎 THE GLASSMORPHISM LOGIN UI
+  // ==========================================
+  if (!isAuthenticated) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-[#09090b] relative overflow-hidden font-sans selection:bg-[#00a884] selection:text-white">
+        {/* Animated Background Glows */}
+
+        {/* The Glass Card */}
+        <div className="relative z-10 w-full max-w-[400px] p-8 m-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl shadow-black/50 flex flex-col items-center">
+          {/* Logo Circle */}
+          <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10 shadow-inner ring-1 ring-white/5">
+            {/* Logo Image */}
+            <img
+              src={logo}
+              alt="WebAutomy"
+              className="w-12 h-12 object-contain opacity-90 drop-shadow-lg"
+            />
+          </div>
+
+          <h2 className="text-2xl font-bold text-white tracking-wider mb-1">
+            WEBAUTOMY
+          </h2>
+          <p className="text-gray-400 text-xs uppercase tracking-[0.2em] mb-8">
+            Admin Console
+          </p>
+
+          {/* Password Input */}
+          <div className="w-full relative group">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Lock
+                size={18}
+                className="text-gray-500 group-focus-within:text-[#00a884] transition-colors"
+              />
+            </div>
+            <input
+              type="password"
+              placeholder="Enter Access Key"
+              className="w-full bg-black/30 text-white pl-12 pr-4 py-4 rounded-xl border border-white/10 focus:border-[#00a884] focus:bg-black/50 outline-none transition-all placeholder-gray-600 text-sm tracking-widest"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              autoFocus
+            />
+          </div>
+
+          {/* Error Message */}
+          <div
+            className={`h-6 mt-2 text-red-400 text-xs font-medium transition-opacity ${error ? "opacity-100" : "opacity-0"}`}
+          >
+            {error}
+          </div>
+
+          {/* Unlock Button */}
+          <button
+            onClick={handleLogin}
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-[#00a884] to-[#008f6f] text-white font-bold py-4 rounded-xl mt-4 hover:shadow-[0_0_20px_rgba(0,168,132,0.3)] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <RefreshCcw size={18} className="animate-spin" />{" "}
+                Authenticating...
+              </>
+            ) : (
+              "UNLOCK SYSTEM"
+            )}
+          </button>
+
+          {/* Footer */}
+          <div className="mt-8 text-white/20 text-[10px] tracking-widest uppercase">
+            Restricted Access • End-to-End Encrypted
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // 🖥️ MAIN DASHBOARD (No Changes Here)
+  // ==========================================
   return (
     <div className="flex h-screen bg-[#0b141a] text-[#e9edef] overflow-hidden font-sans">
       {/* LEFT SIDEBAR */}
@@ -107,11 +212,8 @@ const AdminDashboard = () => {
         <div className="h-16 px-4 bg-[#202c33] flex items-center justify-between border-b border-[#2f3b43]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
-              <img
-                src="/webautomy.svg"
-                alt="Me"
-                className="w-6 h-6 opacity-80"
-              />
+              {/* Dashboard Small Logo */}
+              <img src={logo} alt="Me" className="w-6 h-6 opacity-80" />
             </div>
             <span className="font-semibold text-gray-300">WebAutomy Admin</span>
           </div>
@@ -157,9 +259,7 @@ const AdminDashboard = () => {
               <div
                 key={contact.id}
                 onClick={() => handleContactClick(contact)}
-                className={`flex items-center gap-3 p-3 cursor-pointer border-b border-[#2f3b43] hover:bg-[#202c33] transition-colors ${
-                  selectedContact?.id === contact.id ? "bg-[#2a3942]" : ""
-                }`}
+                className={`flex items-center gap-3 p-3 cursor-pointer border-b border-[#2f3b43] hover:bg-[#202c33] transition-colors ${selectedContact?.id === contact.id ? "bg-[#2a3942]" : ""}`}
               >
                 <div className="w-12 h-12 rounded-full bg-[#6a7175] flex items-center justify-center flex-shrink-0">
                   <User size={24} className="text-[#cfd4d6]" />
@@ -188,6 +288,7 @@ const AdminDashboard = () => {
 
       {/* RIGHT MAIN: Chat Area */}
       <div className="flex-1 flex flex-col relative bg-[#0b141a]">
+        {/* Chat Background */}
         <div
           className="absolute inset-0 opacity-[0.06] pointer-events-none"
           style={{
@@ -239,11 +340,7 @@ const AdminDashboard = () => {
                     className={`flex ${msg.direction === "outbound" ? "justify-end" : "justify-start"}`}
                   >
                     <div
-                      className={`max-w-[65%] px-3 py-1.5 rounded-lg text-sm shadow-sm relative leading-relaxed ${
-                        msg.direction === "outbound"
-                          ? "bg-[#005c4b] text-[#e9edef] rounded-tr-none"
-                          : "bg-[#202c33] text-[#e9edef] rounded-tl-none"
-                      }`}
+                      className={`max-w-[65%] px-3 py-1.5 rounded-lg text-sm shadow-sm relative leading-relaxed ${msg.direction === "outbound" ? "bg-[#005c4b] text-[#e9edef] rounded-tr-none" : "bg-[#202c33] text-[#e9edef] rounded-tl-none"}`}
                     >
                       <p className="mr-2">{msg.content}</p>
                       <span className="text-[10px] float-right mt-1 text-[#8696a0]">
@@ -256,11 +353,10 @@ const AdminDashboard = () => {
                   </div>
                 ))
               )}
-              {/* Invisible element to auto-scroll to bottom */}
               <div ref={messagesEndRef} />
             </div>
 
-            {/* 🆕 Footer Input (Working Now) */}
+            {/* Input Area */}
             <div className="min-h-[62px] bg-[#202c33] px-4 py-2 flex items-center gap-3 z-10 border-t border-[#2f3b43]">
               <Paperclip
                 size={24}
@@ -284,7 +380,6 @@ const AdminDashboard = () => {
               </button>
             </div>
 
-            {/* Warning ko thoda friendly bana diya */}
             <div className="bg-[#111b21] text-[#00a884] text-[10px] text-center py-1 z-10 border-t border-[#2f3b43]">
               ✅ Simulator Mode: Messages are saved to Database only.
             </div>
@@ -297,8 +392,7 @@ const AdminDashboard = () => {
               </h1>
               <p className="text-[#8696a0] text-sm max-w-md mx-auto leading-6">
                 Send and receive messages without keeping your phone online.{" "}
-                <br />
-                Use WebAutomy on up to 4 linked devices and 1 phone.
+                <br /> Use WebAutomy on up to 4 linked devices and 1 phone.
               </p>
               <div className="mt-8 flex justify-center text-[#667781] text-xs items-center gap-1">
                 <span>🔒</span> End-to-end encrypted

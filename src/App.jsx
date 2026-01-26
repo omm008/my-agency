@@ -2,6 +2,8 @@ import React, { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import Lenis from "lenis";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Layouts
 import Navbar from "./components/Navbar";
@@ -19,6 +21,7 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const Simulator = lazy(() => import("./pages/Simulator"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 function App() {
   // 1. Domain Check (Initialize once)
@@ -40,7 +43,8 @@ function App() {
       <Suspense fallback={<DashboardLoader />}>
         <Routes>
           <Route path="/" element={<AdminDashboard />} />
-          <Route path="*" element={<Navigate to="/" />} />
+          {/* Redirect ki jagah NotFound dikhao */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     );
@@ -82,6 +86,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-brand-black text-white selection:bg-brand-blue selection:text-white flex flex-col">
+      <ToastContainer position="top-right" autoClose={3000} />
       <CustomCursor />
 
       <AnimatePresence>
@@ -101,7 +106,7 @@ function App() {
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/simulator" element={<Simulator />} />
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </div>
