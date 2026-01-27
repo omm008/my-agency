@@ -1,65 +1,91 @@
-// src/pages/AdminDashboard.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { supabase } from "../lib/supabaseClient"; // ⚠️ Check path (lib/supabaseClient or just supabaseClient)
+import { supabase } from "../lib/supabaseClient";
 import logo from "../assets/logo.png";
 import { toast } from "react-toastify";
+import { User, RefreshCcw, Bot, Plus, Trash2, X, Lock } from "lucide-react";
 
-import {
-  User,
-  RefreshCcw,
-  Send,
-  Search,
-  MoreVertical,
-  Phone,
-  Paperclip,
-  Lock,
-} from "lucide-react";
+// --- IMPORTS (Apne naye components) ---
+import Sidebar from "../components/dashboard/Sidebar";
+import ChatList from "../components/dashboard/ChatList"; // Step 3 wala component
+import ChatWindow from "../components/dashboard/ChatWindow"; // Step 2 wala component
+
+// --- CONFIGURATION ---
+const COLOR_CLASSES = {
+  gold: "border-yellow-500 text-yellow-500 bg-yellow-500/10",
+  blue: "border-blue-500 text-blue-500 bg-blue-500/10",
+  red: "border-red-500 text-red-500 bg-red-500/10",
+  green: "border-green-500 text-green-500 bg-green-500/10",
+  gray: "border-gray-500 text-gray-500 bg-gray-500/10",
+};
+
+const PREDEFINED_TAGS = [
+  { text: "VIP", color: "gold" },
+  { text: "Lead", color: "blue" },
+  { text: "Pending", color: "red" },
+  { text: "Customer", color: "green" },
+];
 
 const AdminDashboard = () => {
-  // --- STATE ---
+  // --- AUTH STATE ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
-  const [error, setError] = useState(""); // Error animation ke liye
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // Dashboard States
+  // --- UI STATE ---
+  const [activeTab, setActiveTab] = useState("chats");
+  const [isAddingRule, setIsAddingRule] = useState(false);
+
+  // --- DATA STATE ---
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [rules, setRules] = useState([]);
+
+  // --- INPUTS ---
   const [inputText, setInputText] = useState("");
+  const [newRule, setNewRule] = useState({
+    keyword: "",
+    reply: "",
+    matchType: "contains",
+  });
 
   const messagesEndRef = useRef(null);
 
-  // --- 1. LOGIN LOGIC ---
+  // ==========================
+  // 🔐 1. LOGIN LOGIC
+  // ==========================
   const handleLogin = () => {
     setIsLoading(true);
     setError("");
-
-    // Thoda delay taaki "Checking..." feel aaye
     setTimeout(() => {
       if (passwordInput === "admin@webautomy") {
         setIsAuthenticated(true);
-        fetchContacts();
-        toast.success("Access Granted");
+        loadInitialData();
+        toast.success("Welcome Back! 🚀");
       } else {
-        setError("Access Denied: Invalid Credentials");
+        setError("Invalid Credentials");
         setIsLoading(false);
-        toast.error("Access Denied: Invalid Credentials");
+        toast.error("Access Denied");
       }
     }, 800);
   };
 
-  // --- 2. DATA FETCHING ---
+  const loadInitialData = () => {
+    fetchContacts();
+    fetchRules();
+  };
+
+  // ==========================
+  // 📡 2. DATA FETCHING
+  // ==========================
   const fetchContacts = async () => {
     const { data, error } = await supabase
       .from("contacts")
       .select("*")
       .order("created_at", { ascending: false });
-
-    if (error) console.error("Error fetching contacts:", error);
+    if (error) console.error(error);
     else setContacts(data || []);
-    setLoading(false);
   };
 
   const fetchMessages = async (contactId) => {
@@ -68,15 +94,29 @@ const AdminDashboard = () => {
       .select("*")
       .eq("contact_id", contactId)
       .order("created_at", { ascending: true });
-
-    if (error) console.error("Error fetching messages:", error);
+    if (error) console.error(error);
     else setMessages(data || []);
   };
 
-  // --- 3. SEND MESSAGE ---
+  const fetchRules = async () => {
+    const { data, error } = await supabase
+      .from("automation_rules")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) console.error(error);
+    else setRules(data || []);
+  };
+
+  // ==========================
+  // ⚡ 3. ACTION HANDLERS
+  // ==========================
+  const handleSelectContact = (contact) => {
+    setSelectedContact(contact);
+    fetchMessages(contact.id);
+  };
+
   const handleSendMessage = async () => {
     if (!inputText.trim() || !selectedContact) return;
-
     const textToSend = inputText;
     setInputText("");
 
@@ -90,312 +130,362 @@ const AdminDashboard = () => {
       },
     ]);
 
-    if (error) {
-      console.error("Error sending message:", error);
-      alert("Failed to send message locally.");
-    } else {
-      fetchMessages(selectedContact.id);
+    if (error) toast.error("Failed to send");
+    else fetchMessages(selectedContact.id);
+  };
+
+  // 🔥 IMPORTANT: Ye function missing tha, isiliye error aa raha tha!
+  const handleContactUpdate = (updatedContact) => {
+    // 1. Selected Contact update karo
+    setSelectedContact(updatedContact);
+    // 2. Contacts List bhi update karo (taki sidebar/pin status update ho)
+    setContacts((prev) =>
+      prev.map((c) => (c.id === updatedContact.id ? updatedContact : c)),
+    );
+  };
+
+  // --- Automation Handlers ---
+  const handleAddRule = async () => {
+    if (!newRule.keyword || !newRule.reply)
+      return toast.warning("Fill all fields");
+    const { data, error } = await supabase
+      .from("automation_rules")
+      .insert([
+        {
+          trigger_keyword: newRule.keyword,
+          reply_message: newRule.reply,
+          match_type: newRule.matchType,
+          is_active: true,
+        },
+      ])
+      .select();
+
+    if (error) toast.error("Error saving rule");
+    else {
+      setRules([data[0], ...rules]);
+      setIsAddingRule(false);
+      setNewRule({ keyword: "", reply: "", matchType: "contains" });
+      toast.success("Rule Active 🤖");
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") handleSendMessage();
+  const handleDeleteRule = async (id) => {
+    const { error } = await supabase
+      .from("automation_rules")
+      .delete()
+      .eq("id", id);
+    if (!error) {
+      setRules(rules.filter((r) => r.id !== id));
+      toast.info("Rule Deleted");
+    }
   };
 
-  // --- 4. EFFECTS ---
+  // ==========================
+  // 🔄 4. EFFECTS
+  // ==========================
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
-    if (isAuthenticated) fetchContacts();
-    const interval = setInterval(() => {
-      if (isAuthenticated) {
+    let interval;
+    if (isAuthenticated) {
+      interval = setInterval(() => {
         fetchContacts();
         if (selectedContact) fetchMessages(selectedContact.id);
-      }
-    }, 3000);
+      }, 3000);
+    }
     return () => clearInterval(interval);
   }, [selectedContact, isAuthenticated]);
 
-  const handleContactClick = (contact) => {
-    setSelectedContact(contact);
-    fetchMessages(contact.id);
-  };
-
-  // ==========================================
-  // 💎 THE GLASSMORPHISM LOGIN UI
-  // ==========================================
+  // ==========================
+  // 🖥️ 5. RENDER
+  // ==========================
   if (!isAuthenticated) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[#09090b] relative overflow-hidden font-sans selection:bg-[#00a884] selection:text-white">
-        {/* Animated Background Glows */}
-
-        {/* The Glass Card */}
-        <div className="relative z-10 w-full max-w-[400px] p-8 m-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl shadow-black/50 flex flex-col items-center">
-          {/* Logo Circle */}
-          <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10 shadow-inner ring-1 ring-white/5">
-            {/* Logo Image */}
-            <img
-              src={logo}
-              alt="WebAutomy"
-              className="w-12 h-12 object-contain opacity-90 drop-shadow-lg"
-            />
-          </div>
-
-          <h2 className="text-2xl font-bold text-white tracking-wider mb-1">
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#00a884] rounded-full mix-blend-screen filter blur-[150px] opacity-15 animate-pulse"></div>
+        <div className="relative z-10 w-full max-w-[400px] p-8 m-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl flex flex-col items-center">
+          <h2 className="text-2xl font-bold text-white tracking-wider mb-8">
             WEBAUTOMY
           </h2>
-          <p className="text-gray-400 text-xs uppercase tracking-[0.2em] mb-8">
-            Admin Console
-          </p>
-
-          {/* Password Input */}
-          <div className="w-full relative group">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Lock
-                size={18}
-                className="text-gray-500 group-focus-within:text-[#00a884] transition-colors"
-              />
-            </div>
-            <input
-              type="password"
-              placeholder="Enter Access Key"
-              className="w-full bg-black/30 text-white pl-12 pr-4 py-4 rounded-xl border border-white/10 focus:border-[#00a884] focus:bg-black/50 outline-none transition-all placeholder-gray-600 text-sm tracking-widest"
-              value={passwordInput}
-              onChange={(e) => setPasswordInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-              autoFocus
-            />
-          </div>
-
-          {/* Error Message */}
-          <div
-            className={`h-6 mt-2 text-red-400 text-xs font-medium transition-opacity ${error ? "opacity-100" : "opacity-0"}`}
-          >
-            {error}
-          </div>
-
-          {/* Unlock Button */}
+          <input
+            type="password"
+            placeholder="Access Key"
+            className="w-full bg-black/30 text-white p-4 rounded-xl border border-white/10 outline-none focus:border-[#00a884]"
+            value={passwordInput}
+            onChange={(e) => setPasswordInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            autoFocus
+          />
           <button
             onClick={handleLogin}
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-[#00a884] to-[#008f6f] text-white font-bold py-4 rounded-xl mt-4 hover:shadow-[0_0_20px_rgba(0,168,132,0.3)] transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full bg-[#00a884] text-white font-bold py-4 rounded-xl mt-4 hover:bg-[#008f6f]"
           >
-            {isLoading ? (
-              <>
-                <RefreshCcw size={18} className="animate-spin" />{" "}
-                Authenticating...
-              </>
-            ) : (
-              "UNLOCK SYSTEM"
-            )}
+            {isLoading ? "..." : "UNLOCK"}
           </button>
-
-          {/* Footer */}
-          <div className="mt-8 text-white/20 text-[10px] tracking-widest uppercase">
-            Restricted Access • End-to-End Encrypted
-          </div>
+          {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
         </div>
       </div>
     );
   }
 
-  // ==========================================
-  // 🖥️ MAIN DASHBOARD (No Changes Here)
-  // ==========================================
   return (
     <div className="flex h-screen bg-[#0b141a] text-[#e9edef] overflow-hidden font-sans">
-      {/* LEFT SIDEBAR */}
-      <div className="w-1/3 min-w-[320px] max-w-[450px] border-r border-[#2f3b43] flex flex-col bg-[#111b21]">
-        {/* Header */}
-        <div className="h-16 px-4 bg-[#202c33] flex items-center justify-between border-b border-[#2f3b43]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
-              {/* Dashboard Small Logo */}
-              <img src={logo} alt="Me" className="w-6 h-6 opacity-80" />
-            </div>
-            <span className="font-semibold text-gray-300">WebAutomy Admin</span>
-          </div>
-          <div className="flex gap-4 text-[#aebac1]">
-            <button
-              onClick={fetchContacts}
-              className="hover:text-white transition-colors"
-              title="Refresh"
-            >
-              <RefreshCcw size={20} />
-            </button>
-            <MoreVertical size={20} className="cursor-pointer" />
-          </div>
-        </div>
+      {/* SIDEBAR */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onLogout={() => setIsAuthenticated(false)}
+      />
 
-        {/* Search Bar */}
-        <div className="p-2 border-b border-[#2f3b43]">
-          <div className="bg-[#202c33] rounded-lg flex items-center px-4 py-1.5">
-            <Search size={18} className="text-[#aebac1] mr-4" />
-            <input
-              type="text"
-              placeholder="Search or start new chat"
-              className="bg-transparent w-full text-sm py-1 focus:outline-none text-[#d1d7db] placeholder-[#8696a0]"
-            />
-          </div>
-        </div>
-
-        {/* Contact List */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {loading ? (
-            <div className="flex items-center justify-center h-20 text-[#8696a0] text-sm">
-              Loading chats...
-            </div>
-          ) : contacts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-[#8696a0]">
-              <p>No active chats.</p>
-              <span className="text-xs mt-2">
-                Waiting for webhook events...
-              </span>
-            </div>
-          ) : (
-            contacts.map((contact) => (
-              <div
-                key={contact.id}
-                onClick={() => handleContactClick(contact)}
-                className={`flex items-center gap-3 p-3 cursor-pointer border-b border-[#2f3b43] hover:bg-[#202c33] transition-colors ${selectedContact?.id === contact.id ? "bg-[#2a3942]" : ""}`}
-              >
-                <div className="w-12 h-12 rounded-full bg-[#6a7175] flex items-center justify-center flex-shrink-0">
-                  <User size={24} className="text-[#cfd4d6]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-baseline">
-                    <h3 className="text-[#e9edef] font-medium truncate">
-                      {contact.name || contact.phone}
-                    </h3>
-                    <span className="text-xs text-[#8696a0]">
-                      {new Date(contact.created_at).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-sm text-[#8696a0] truncate mt-0.5">
-                    {contact.phone}
-                  </p>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* RIGHT MAIN: Chat Area */}
-      <div className="flex-1 flex flex-col relative bg-[#0b141a]">
-        {/* Chat Background */}
-        <div
-          className="absolute inset-0 opacity-[0.06] pointer-events-none"
-          style={{
-            backgroundImage:
-              "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')",
-          }}
-        ></div>
-
-        {selectedContact ? (
+      <div className="flex-1 flex overflow-hidden">
+        {/* === TAB 1: CHATS === */}
+        {activeTab === "chats" && (
           <>
-            {/* Header */}
-            <div className="h-16 px-4 bg-[#202c33] flex items-center justify-between z-10 border-b border-[#2f3b43]">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-[#6a7175] flex items-center justify-center">
-                  <User size={20} className="text-[#cfd4d6]" />
-                </div>
-                <div>
-                  <h2 className="text-[#e9edef] font-medium">
-                    {selectedContact.name}
-                  </h2>
-                  <p className="text-xs text-[#8696a0]">
-                    {selectedContact.phone}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-6 text-[#aebac1]">
-                <Phone size={20} className="cursor-pointer hover:text-white" />
-                <Search size={20} className="cursor-pointer hover:text-white" />
-                <MoreVertical
-                  size={20}
-                  className="cursor-pointer hover:text-white"
-                />
-              </div>
-            </div>
+            {/* LIST COLUMN (New Component) */}
+            <ChatList
+              contacts={contacts}
+              selectedContact={selectedContact}
+              onSelectContact={handleSelectContact}
+              onRefresh={fetchContacts}
+            />
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-2 z-10 custom-scrollbar">
-              {messages.length === 0 ? (
-                <div className="flex justify-center mt-10">
-                  <div className="bg-[#1f2c34] text-[#ffd279] text-xs px-4 py-2 rounded-lg shadow-sm border border-[#2a3942]">
-                    Messages are end-to-end encrypted. No one outside of this
-                    chat, not even WhatsApp, can read or listen to them.
+            {/* CHAT AREA */}
+            {selectedContact ? (
+              <>
+                {/* CHAT WINDOW (New Component) */}
+                <ChatWindow
+                  contact={selectedContact}
+                  messages={messages}
+                  inputText={inputText}
+                  setInputText={setInputText}
+                  onSendMessage={handleSendMessage}
+                  messagesEndRef={messagesEndRef}
+                  onContactUpdate={handleContactUpdate} // 👈 Passed Here!
+                />
+
+                {/* RIGHT PANEL (CRM Info - Inline Logic) */}
+                <div className="w-[300px] bg-[#111b21] border-l border-[#2f3b43] hidden xl:block overflow-y-auto p-6 custom-scrollbar">
+                  {/* Profile Header */}
+                  <div className="flex flex-col items-center border-b border-[#2f3b43] pb-6 mb-6">
+                    <div className="w-20 h-20 rounded-full bg-[#6a7175] flex items-center justify-center mb-4 overflow-hidden">
+                      {selectedContact.avatar_url ? (
+                        <img
+                          src={selectedContact.avatar_url}
+                          className="w-full h-full object-cover"
+                          alt=""
+                        />
+                      ) : (
+                        <User size={40} className="text-[#cfd4d6]" />
+                      )}
+                    </div>
+                    <h2 className="text-xl text-[#e9edef] font-medium">
+                      {selectedContact.name}
+                    </h2>
+                    <p className="text-[#8696a0]">{selectedContact.phone}</p>
                   </div>
-                </div>
-              ) : (
-                messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.direction === "outbound" ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-[65%] px-3 py-1.5 rounded-lg text-sm shadow-sm relative leading-relaxed ${msg.direction === "outbound" ? "bg-[#005c4b] text-[#e9edef] rounded-tr-none" : "bg-[#202c33] text-[#e9edef] rounded-tl-none"}`}
-                    >
-                      <p className="mr-2">{msg.content}</p>
-                      <span className="text-[10px] float-right mt-1 text-[#8696a0]">
-                        {new Date(msg.created_at).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
+
+                  {/* Tags Section */}
+                  <div className="mb-6 border-b border-[#2f3b43] pb-6">
+                    <h3 className="text-[#8696a0] text-xs uppercase tracking-wider mb-3">
+                      Tags
+                    </h3>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {(Array.isArray(selectedContact.tags)
+                        ? selectedContact.tags
+                        : []
+                      ).map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className={`px-3 py-1 rounded-full text-xs border flex items-center gap-1 ${COLOR_CLASSES[tag.color] || COLOR_CLASSES.gray}`}
+                        >
+                          {tag.text}
+                          <X
+                            size={12}
+                            className="cursor-pointer hover:opacity-80"
+                            onClick={async () => {
+                              const newTags = selectedContact.tags.filter(
+                                (t) => t.text !== tag.text,
+                              );
+                              await supabase
+                                .from("contacts")
+                                .update({ tags: newTags })
+                                .eq("id", selectedContact.id);
+                              handleContactUpdate({
+                                ...selectedContact,
+                                tags: newTags,
+                              });
+                            }}
+                          />
+                        </span>
+                      ))}
+                      {(!selectedContact.tags ||
+                        selectedContact.tags.length === 0) && (
+                        <span className="text-xs text-[#667781] italic">
+                          No tags added
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="text-xs text-[#8696a0] mb-2">Add Tag:</div>
+                    <div className="flex flex-wrap gap-2">
+                      {PREDEFINED_TAGS.map((tag) => (
+                        <button
+                          key={tag.text}
+                          onClick={async () => {
+                            const current = Array.isArray(selectedContact.tags)
+                              ? selectedContact.tags
+                              : [];
+                            if (current.some((t) => t.text === tag.text))
+                              return;
+                            const newTags = [...current, tag];
+                            await supabase
+                              .from("contacts")
+                              .update({ tags: newTags })
+                              .eq("id", selectedContact.id);
+                            handleContactUpdate({
+                              ...selectedContact,
+                              tags: newTags,
+                            });
+                          }}
+                          className="bg-[#202c33] hover:bg-[#2a3942] text-[#d1d7db] px-2 py-1 rounded border border-[#2f3b43] text-xs flex items-center gap-1 transition-colors"
+                        >
+                          <Plus size={10} /> {tag.text}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                ))
-              )}
-              <div ref={messagesEndRef} />
-            </div>
 
-            {/* Input Area */}
-            <div className="min-h-[62px] bg-[#202c33] px-4 py-2 flex items-center gap-3 z-10 border-t border-[#2f3b43]">
-              <Paperclip
-                size={24}
-                className="text-[#8696a0] cursor-pointer hover:text-[#cfd4d6]"
-              />
-              <div className="flex-1 bg-[#2a3942] rounded-lg flex items-center px-4 py-2">
-                <input
-                  type="text"
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type a message..."
-                  className="bg-transparent w-full focus:outline-none text-[#d1d7db] placeholder-[#8696a0] text-sm"
-                />
+                  {/* Notes Section */}
+                  <div>
+                    <label className="text-xs text-[#8696a0] uppercase tracking-wider mb-2 block">
+                      Private Note
+                    </label>
+                    <textarea
+                      className="w-full bg-[#202c33] text-sm text-[#d1d7db] p-3 rounded-lg border border-[#2f3b43] focus:border-[#00a884] outline-none h-24 resize-none"
+                      placeholder="Write something..."
+                      defaultValue={selectedContact.notes || ""}
+                      onBlur={async (e) => {
+                        const val = e.target.value;
+                        if (val === selectedContact.notes) return;
+                        await supabase
+                          .from("contacts")
+                          .update({ notes: val })
+                          .eq("id", selectedContact.id);
+                        toast.success("Note Saved! 📝");
+                        handleContactUpdate({ ...selectedContact, notes: val });
+                      }}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center bg-[#0b141a] z-10 text-center border-b-8 border-[#00a884]">
+                <h1 className="text-2xl font-light text-[#e9edef] mb-2">
+                  WebAutomy Web
+                </h1>
+                <p className="text-[#8696a0] text-sm">
+                  Select a chat to start messaging
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* === TAB 2: AUTOMATION === */}
+        {activeTab === "automation" && (
+          <div className="flex-1 flex flex-col bg-[#0b141a] relative">
+            <div className="h-16 px-8 bg-[#202c33] flex items-center justify-between border-b border-[#2f3b43] z-10">
+              <div className="flex items-center gap-3">
+                <Bot size={24} className="text-[#00a884]" />
+                <h2 className="font-semibold text-gray-300 text-xl">
+                  Automation Rules
+                </h2>
               </div>
               <button
-                onClick={handleSendMessage}
-                className="text-[#8696a0] hover:text-[#00a884] transition-colors"
+                onClick={() => setIsAddingRule(true)}
+                className="bg-[#00a884] text-[#111b21] px-4 py-2 rounded-lg font-bold flex items-center gap-2"
               >
-                <Send size={24} />
+                <Plus size={18} /> New Rule
               </button>
             </div>
-
-            <div className="bg-[#111b21] text-[#00a884] text-[10px] text-center py-1 z-10 border-t border-[#2f3b43]">
-              ✅ Simulator Mode: Messages are saved to Database only.
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center bg-[#222e35] border-b-8 border-[#00a884] z-10">
-            <div className="text-center">
-              <h1 className="text-3xl font-light text-[#e9edef] mb-4">
-                WebAutomy Web
-              </h1>
-              <p className="text-[#8696a0] text-sm max-w-md mx-auto leading-6">
-                Send and receive messages without keeping your phone online.{" "}
-                <br /> Use WebAutomy on up to 4 linked devices and 1 phone.
-              </p>
-              <div className="mt-8 flex justify-center text-[#667781] text-xs items-center gap-1">
-                <span>🔒</span> End-to-end encrypted
+            <div className="flex-1 p-8 overflow-y-auto custom-scrollbar z-10">
+              {isAddingRule && (
+                <div className="bg-[#202c33] p-6 rounded-xl border border-[#2f3b43] mb-6 shadow-xl">
+                  <h3 className="text-white font-medium mb-4">
+                    New Auto-Reply
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <input
+                      type="text"
+                      placeholder="Trigger Word"
+                      className="bg-[#111b21] p-3 rounded-lg text-white border border-[#2f3b43]"
+                      value={newRule.keyword}
+                      onChange={(e) =>
+                        setNewRule({ ...newRule, keyword: e.target.value })
+                      }
+                    />
+                    <input
+                      type="text"
+                      placeholder="Bot Reply"
+                      className="bg-[#111b21] p-3 rounded-lg text-white border border-[#2f3b43]"
+                      value={newRule.reply}
+                      onChange={(e) =>
+                        setNewRule({ ...newRule, reply: e.target.value })
+                      }
+                    />
+                    <select
+                      className="bg-[#111b21] p-3 rounded-lg text-white border border-[#2f3b43]"
+                      value={newRule.matchType}
+                      onChange={(e) =>
+                        setNewRule({ ...newRule, matchType: e.target.value })
+                      }
+                    >
+                      <option value="contains">Contains</option>
+                      <option value="exact">Exact</option>
+                    </select>
+                  </div>
+                  <div className="flex gap-3 justify-end">
+                    <button
+                      onClick={() => setIsAddingRule(false)}
+                      className="text-[#8696a0]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleAddRule}
+                      className="bg-[#00a884] px-6 py-2 rounded-lg font-bold"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="grid gap-4">
+                {rules.map((rule) => (
+                  <div
+                    key={rule.id}
+                    className="bg-[#111b21] p-4 rounded-lg border border-[#2f3b43] flex justify-between items-center"
+                  >
+                    <div className="flex gap-4 items-center">
+                      <span className="text-[#00a884]">
+                        "{rule.trigger_keyword}"
+                      </span>{" "}
+                      <span className="text-[#8696a0]">➔</span>{" "}
+                      <span className="text-gray-300">
+                        {rule.reply_message}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteRule(rule.id)}
+                      className="text-[#8696a0] hover:text-red-400"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

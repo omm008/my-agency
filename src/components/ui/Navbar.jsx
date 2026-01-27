@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
-import Magnetic from "./ui/Magnetic";
-import logoImg from "../assets/logo.png";
+import Magnetic from "./Magnetic";
+import logoImg from "../../assets/logo.png";
 
 // --- 1. THE ROLLING TEXT COMPONENT ---
 const RollingLink = ({ href, name, isActive }) => {

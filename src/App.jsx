@@ -6,7 +6,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // Layouts
-import Navbar from "./components/Navbar";
+import Navbar from "./components/ui/Navbar";
 import Footer from "./components/layout/Footer";
 import Preloader from "./components/ui/Preloader";
 import CustomCursor from "./components/ui/CustomCursor";
@@ -38,20 +38,20 @@ function App() {
 
   // 3. 🛑 EARLY RETURN: Agar 'app.' domain hai, toh YAHIN se return ho jao.
   // Isse Navbar, Footer, Cursor, Preloader kuch bhi load nahi hoga dashboard par.
-  if (isAppDomain) {
-    return (
-      <>
-        <CustomCursor /> {/* ✅ Added Here */}
-        <ToastContainer position="top-right" autoClose={3000} />{" "}
-        <Suspense fallback={<DashboardLoader />}>
-          <Routes>
-            <Route path="/" element={<AdminDashboard />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </>
-    );
-  }
+  // if (isAppDomain) {
+  //   return (
+  //     <>
+  //       <CustomCursor /> {/* ✅ Added Here */}
+  //       <ToastContainer position="top-right" autoClose={3000} />{" "}
+  //       <Suspense fallback={<DashboardLoader />}>
+  //         <Routes>
+  //           <Route path="/" element={<AdminDashboard />} />
+  //           <Route path="*" element={<NotFound />} />
+  //         </Routes>
+  //       </Suspense>
+  //     </>
+  //   );
+  // }
 
   // ---------------------------------------------------------------
   // 🌍 MAIN WEBSITE LOGIC (Ye code tabhi chalega jab domain 'app.' NAHI hai)
@@ -97,7 +97,7 @@ function App() {
       </AnimatePresence>
 
       {/* Navbar sirf Main Website par dikhega */}
-      <Navbar />
+      {/* <Navbar /> */}
 
       <div className="flex-grow">
         <Suspense fallback={null}>
@@ -109,6 +109,7 @@ function App() {
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/simulator" element={<Simulator />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

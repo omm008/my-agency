@@ -85,6 +85,14 @@ const Footer = () => {
                   Simulator
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/admin"
+                  className="hover:text-brand-blue transition-colors"
+                >
+                  Admin
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -108,7 +116,7 @@ const Footer = () => {
               />
             </div>
             <p className="text-neutral-600 text-sm">
-              © 2026 Webautomy Inc.
+              Webautomy.
               <br />
               All rights reserved.
             </p>

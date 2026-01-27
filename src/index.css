@@ -32,8 +32,13 @@
   a,
   button,
   input,
-  textarea {
-    cursor: none; /* Ensures the hand icon doesn't appear over links */
+  textarea,
+  .cursor-pointer {
+    cursor: none !important;
+  }
+
+  ::selection {
+    cursor: none !important;
   }
 }
 
