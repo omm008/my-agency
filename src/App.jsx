@@ -97,7 +97,7 @@ function App() {
       </AnimatePresence>
 
       {/* Navbar sirf Main Website par dikhega */}
-      {/* <Navbar /> */}
+      <Navbar />
 
       <div className="flex-grow">
         <Suspense fallback={null}>
