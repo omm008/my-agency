@@ -8,6 +8,7 @@ import { User, RefreshCcw, Bot, Plus, Trash2, X, Lock } from "lucide-react";
 import Sidebar from "../components/dashboard/Sidebar";
 import ChatList from "../components/dashboard/ChatList"; // Step 3 wala component
 import ChatWindow from "../components/dashboard/ChatWindow"; // Step 2 wala component
+import Login from "../components/auth/Login"; // 👈 Ye Add Karo
 
 // --- CONFIGURATION ---
 const COLOR_CLASSES = {
@@ -27,10 +28,9 @@ const PREDEFINED_TAGS = [
 
 const AdminDashboard = () => {
   // --- AUTH STATE ---
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [passwordInput, setPasswordInput] = useState("");
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
 
   // --- UI STATE ---
   const [activeTab, setActiveTab] = useState("chats");
@@ -55,21 +55,28 @@ const AdminDashboard = () => {
   // ==========================
   // 🔐 1. LOGIN LOGIC
   // ==========================
-  const handleLogin = () => {
-    setIsLoading(true);
-    setError("");
-    setTimeout(() => {
-      if (passwordInput === "admin@webautomy") {
-        setIsAuthenticated(true);
-        loadInitialData();
-        toast.success("Welcome Back! 🚀");
-      } else {
-        setError("Invalid Credentials");
-        setIsLoading(false);
-        toast.error("Access Denied");
-      }
-    }, 800);
-  };
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // 2. Fetch Data only if Session exists
+  useEffect(() => {
+    if (session) {
+      fetchContacts();
+      fetchRules();
+    }
+  }, [session]);
 
   const loadInitialData = () => {
     fetchContacts();
@@ -118,20 +125,39 @@ const AdminDashboard = () => {
   const handleSendMessage = async () => {
     if (!inputText.trim() || !selectedContact) return;
     const textToSend = inputText;
-    setInputText("");
+    setInputText(""); // UI turant clear kar do
 
-    const { error } = await supabase.from("messages").insert([
-      {
-        contact_id: selectedContact.id,
-        content: textToSend,
-        direction: "outbound",
-        status: "sent",
-        created_at: new Date().toISOString(),
-      },
-    ]);
+    try {
+      // 1. Pehle Database mein save karo (Optimistic UI)
+      const { error } = await supabase.from("messages").insert([
+        {
+          contact_id: selectedContact.id,
+          content: textToSend,
+          direction: "outbound",
+          status: "sent", // Abhi 'sent' maano
+          created_at: new Date().toISOString(),
+        },
+      ]);
 
-    if (error) toast.error("Failed to send");
-    else fetchMessages(selectedContact.id);
+      if (error) throw error;
+
+      // 2. Ab Backend API ko call karo (Real Message Bhejo)
+      // NOTE: Ye URL tumhare Render ka hai
+      await axios.post(
+        "https://webautomy-backend.onrender.com/api/send-message",
+        {
+          phone: selectedContact.phone,
+          message: textToSend,
+        },
+      );
+
+      // 3. UI Update
+      fetchMessages(selectedContact.id);
+      // toast.success("Sent!"); // Optional: Har message pe toast dikhana irritating ho sakta hai
+    } catch (err) {
+      console.error("Sending Error:", err);
+      toast.error("Message DB mein gaya, par WhatsApp fail hua!");
+    }
   };
 
   // 🔥 IMPORTANT: Ye function missing tha, isiliye error aa raha tha!
@@ -189,56 +215,33 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     let interval;
-    if (isAuthenticated) {
-      interval = setInterval(() => {
-        fetchContacts();
-        if (selectedContact) fetchMessages(selectedContact.id);
-      }, 3000);
-    }
+    interval = setInterval(() => {
+      fetchContacts();
+      if (selectedContact) fetchMessages(selectedContact.id);
+    }, 3000);
+
     return () => clearInterval(interval);
-  }, [selectedContact, isAuthenticated]);
+  }, [selectedContact]);
 
   // ==========================
   // 🖥️ 5. RENDER
   // ==========================
-  if (!isAuthenticated) {
+  if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#09090b] relative overflow-hidden font-sans selection:bg-[#00a884] selection:text-white">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#00a884] rounded-full mix-blend-screen filter blur-[150px] opacity-15 animate-pulse"></div>
-        <div className="relative z-10 w-full max-w-[400px] p-8 m-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl flex flex-col items-center">
-          <h2 className="text-2xl font-bold text-white tracking-wider mb-8">
-            WEBAUTOMY
-          </h2>
-          <input
-            type="password"
-            placeholder="Access Key"
-            className="w-full bg-black/30 text-white p-4 rounded-xl border border-white/10 outline-none focus:border-[#00a884]"
-            value={passwordInput}
-            onChange={(e) => setPasswordInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-            autoFocus
-          />
-          <button
-            onClick={handleLogin}
-            disabled={isLoading}
-            className="w-full bg-[#00a884] text-white font-bold py-4 rounded-xl mt-4 hover:bg-[#008f6f]"
-          >
-            {isLoading ? "..." : "UNLOCK"}
-          </button>
-          {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
-        </div>
+      <div className="h-screen bg-[#0b141a] text-white flex items-center justify-center">
+        Loading...
       </div>
     );
+  }
+
+  if (!session) {
+    return <Login onSuccess={setSession} />; // 👈 Naya Login Component
   }
 
   return (
     <div className="flex h-screen bg-[#0b141a] text-[#e9edef] overflow-hidden font-sans">
       {/* SIDEBAR */}
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onLogout={() => setIsAuthenticated(false)}
-      />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <div className="flex-1 flex overflow-hidden">
         {/* === TAB 1: CHATS === */}

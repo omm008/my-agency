@@ -1,155 +1,153 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
 import {
-  User,
-  Phone,
-  MoreVertical,
-  Paperclip,
   Send,
-  Zap,
-  Pin,
-  PinOff,
+  Paperclip,
+  MoreVertical,
+  Phone,
+  Video,
+  Search,
+  FileText,
+  Image as ImageIcon,
+  X,
 } from "lucide-react";
-import { supabase } from "../../lib/supabaseClient";
+import MessageList from "./ChatArea/MessageList";
+import MessageInput from "./ChatArea/MessageInput";
+import ChatHeader from "./ChatArea/ChatHeader";
+import { supabase } from "../../lib/supabaseClient"; // Path check kar lena
 import { toast } from "react-toastify";
-import QuickReplies from "./QuickReplies";
 
 const ChatWindow = ({
   contact,
-  messages,
+  messages = [],
   inputText,
   setInputText,
   onSendMessage,
   messagesEndRef,
-  onContactUpdate, // 👈 New Prop: Parent ko batane ke liye
+  onContactUpdate,
 }) => {
-  const [showQuickReplies, setShowQuickReplies] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
-  // --- PIN/UNPIN LOGIC ---
-  const handleTogglePin = async () => {
-    const newStatus = !contact.is_pinned;
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    // 1. DB Update
-    const { error } = await supabase
-      .from("contacts")
-      .update({ is_pinned: newStatus })
-      .eq("id", contact.id);
+    if (file.size > 5 * 1024 * 1024) {
+      return toast.error("File size must be less than 5MB");
+    }
+    const fileType = file.type.startsWith("image/") ? "image" : "document";
 
-    if (error) {
-      toast.error("Failed to update pin");
-    } else {
-      toast.success(newStatus ? "Chat Pinned 📌" : "Chat Unpinned");
-      // 2. Parent ko bolo refresh kare (UI Update)
-      if (onContactUpdate) {
-        onContactUpdate({ ...contact, is_pinned: newStatus });
-      }
+    setIsUploading(true);
+    const toastId = toast.loading("Uploading media...");
+
+    try {
+      // 1. Supabase Storage mein Upload
+      const fileName = `${Date.now()}_${file.name.replace(/\s/g, "_")}`;
+      const { error: uploadError } = await supabase.storage
+        .from("chat-media")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // 2. Public URL nikalo
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("chat-media").getPublicUrl(fileName);
+
+      // 3. Database mein Entry
+      const { error: dbError } = await supabase.from("messages").insert([
+        {
+          contact_id: contact.id,
+          direction: "outbound",
+          status: "sent",
+          content: fileType === "image" ? "📷 Image" : "📄 Document",
+          media_url: publicUrl,
+          media_type: fileType,
+          media_filename: file.name,
+        },
+      ]);
+
+      if (dbError) throw dbError;
+
+      // 4. 🔥 Backend API Call (Ab ye real WhatsApp message bhejega)
+      await axios.post(
+        "https://webautomy-backend.onrender.com/api/send-message",
+        {
+          phone: contact.phone,
+          mediaUrl: publicUrl, // URL bhejo
+          mediaType: fileType, // Type batao
+          // Message body khali chhod sakte hain ya caption bana sakte hain
+          message: fileType === "document" ? file.name : "",
+        },
+      );
+
+      toast.update(toastId, {
+        render: "Media Sent! 📤",
+        type: "success",
+        isLoading: false,
+        autoClose: 2000,
+      });
+    } catch (error) {
+      console.error(error);
+      toast.update(toastId, {
+        render: "Failed ❌",
+        type: "error",
+        isLoading: false,
+        autoClose: 3000,
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  const handleTemplateSelect = (message) => {
-    setInputText(message);
-    setShowQuickReplies(false);
-  };
-
+  // --- UI RENDER ---
   return (
-    <div className="flex-1 flex flex-col relative bg-[#0b141a]">
-      <div
-        className="absolute inset-0 opacity-[0.06] pointer-events-none"
-        style={{
-          backgroundImage:
-            "url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')",
-        }}
-      ></div>
+    <div className="flex flex-col h-full bg-[#0b141a] relative">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-[0.06] bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] pointer-events-none"></div>
 
-      {/* 1. Header */}
-      <div className="h-16 px-4 bg-[#202c33] flex items-center justify-between z-10 border-b border-[#2f3b43]">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-[#6a7175] flex items-center justify-center">
-            <User size={20} className="text-[#cfd4d6]" />
-          </div>
-          <div>
-            <h2 className="text-[#e9edef] font-medium flex items-center gap-2">
-              {contact.name}
-              {contact.is_pinned && (
-                <Pin size={12} className="text-[#00a884] fill-current" />
-              )}
-            </h2>
-            <p className="text-xs text-[#8696a0]">{contact.phone}</p>
-          </div>
-        </div>
-        <div className="flex gap-4 text-[#aebac1]">
-          {/* PIN BUTTON */}
-          <button
-            onClick={handleTogglePin}
-            className="hover:text-white"
-            title={contact.is_pinned ? "Unpin Chat" : "Pin Chat"}
-          >
-            {contact.is_pinned ? <PinOff size={20} /> : <Pin size={20} />}
-          </button>
+      {/* Header */}
+      <ChatHeader contact={contact} />
 
-          <Phone size={20} className="cursor-pointer hover:text-white" />
-          <MoreVertical size={20} className="cursor-pointer hover:text-white" />
-        </div>
-      </div>
-
-      {/* 2. Messages List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2 z-10 custom-scrollbar">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.direction === "outbound" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-[65%] px-3 py-1.5 rounded-lg text-sm shadow-sm relative ${msg.direction === "outbound" ? "bg-[#005c4b] text-[#e9edef] rounded-tr-none" : "bg-[#202c33] text-[#e9edef] rounded-tl-none"}`}
-            >
-              <p className="mr-2 whitespace-pre-wrap">{msg.content}</p>
-              <span className="text-[10px] float-right mt-1 text-[#8696a0]">
-                {new Date(msg.created_at).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-          </div>
-        ))}
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-4 custom-scrollbar relative z-10">
+        <MessageList messages={messages} />
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Replies Popup */}
-      {showQuickReplies && (
-        <QuickReplies
-          onSelect={handleTemplateSelect}
-          onClose={() => setShowQuickReplies(false)}
+      {/* Input Area */}
+      <div className="p-3 bg-[#202c33] flex items-center gap-2 z-20">
+        {/* Attachment Button */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          accept="image/*,application/pdf"
+          onChange={handleFileUpload}
         />
-      )}
-
-      {/* 3. Input Area */}
-      <div className="min-h-[62px] bg-[#202c33] px-4 py-2 flex items-center gap-3 z-10 border-t border-[#2f3b43]">
         <button
-          onClick={() => setShowQuickReplies(!showQuickReplies)}
-          className={`transition-colors ${showQuickReplies ? "text-[#00a884]" : "text-[#8696a0] hover:text-[#00a884]"}`}
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploading}
+          className={`p-2 text-[#8696a0] hover:bg-[#2a3942] rounded-full transition-colors ${isUploading ? "animate-pulse" : ""}`}
+          title="Attach Image or PDF"
         >
-          <Zap size={24} fill={showQuickReplies ? "currentColor" : "none"} />
+          {isUploading ? (
+            <MoreVertical className="animate-spin" />
+          ) : (
+            <Paperclip size={24} />
+          )}
         </button>
-        <Paperclip
-          size={24}
-          className="text-[#8696a0] cursor-pointer hover:text-white"
-        />
-        <div className="flex-1 bg-[#2a3942] rounded-lg flex items-center px-4 py-2">
-          <input
-            type="text"
+
+        {/* Text Input Component */}
+        <div className="flex-1">
+          <MessageInput
             value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && onSendMessage()}
-            placeholder="Type a message..."
-            className="bg-transparent w-full focus:outline-none text-[#d1d7db] placeholder-[#8696a0] text-sm"
+            onChange={setInputText}
+            onSend={onSendMessage}
           />
         </div>
-        <button
-          onClick={onSendMessage}
-          className="text-[#8696a0] hover:text-[#00a884]"
-        >
-          <Send size={24} />
-        </button>
       </div>
     </div>
   );

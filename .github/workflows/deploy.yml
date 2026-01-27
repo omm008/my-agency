@@ -28,7 +28,8 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_WTSP_PHONE: ${{ secrets.VITE_WTSP_PHONE }}
 
-      - name: Deploy to Hostinger via SFTP
+      # 🚀 Deploy to Main Domain
+      - name: Deploy to Main Domain (public_html)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SFTP_HOST }}
@@ -36,6 +37,19 @@ jobs:
           password: ${{ secrets.SFTP_PASSWORD }}
           port: ${{ secrets.SFTP_PORT }}
           source: dist/
-          target: ${{ secrets.SFTP_TARGET }}
+          target: /public_html/
+          strip_components: 1
+          overwrite: true
+
+      # 🚀 Deploy to Subdomain
+      - name: Deploy to Subdomain (public_html/app)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SFTP_HOST }}
+          username: ${{ secrets.SFTP_USERNAME }}
+          password: ${{ secrets.SFTP_PASSWORD }}
+          port: ${{ secrets.SFTP_PORT }}
+          source: dist/
+          target: /public_html/app/
           strip_components: 1
           overwrite: true
