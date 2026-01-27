@@ -94,13 +94,14 @@ const PrivacyPolicy = () => {
                     contact@webautomy.com
                   </a>
                 </li>
+
                 <li>
                   <strong className="text-white">Registered Office:</strong>
                   <br />
-                  WebAutomy (MSME Reg: UDYAM-MP-23-0090709)
+                  WebAutomy (MSME Reg: UDYAM-MP-24-0090709)
                   <br />
                   {/* Yahan wahi same address daalna jo Udyam Certificate par hai */}
-                  House No 149, Lala Lajpat rai ward,
+                  House No 149, Lala Lajpat rai ward, Ward 70, Siddha Nagar
                   <br />
                   Manegaon ,Ranjhi, Jabalpur, Madhya Pradesh, India - 482005
                 </li>
