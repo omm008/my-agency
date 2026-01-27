@@ -37,7 +37,7 @@ jobs:
           password: ${{ secrets.SFTP_PASSWORD }}
           port: ${{ secrets.SFTP_PORT }}
           source: dist/
-          target: /public_html/
+          target: public_html/
           strip_components: 1
           overwrite: true
 
@@ -50,6 +50,6 @@ jobs:
           password: ${{ secrets.SFTP_PASSWORD }}
           port: ${{ secrets.SFTP_PORT }}
           source: dist/
-          target: /public_html/app/
+          target: public_html/app/
           strip_components: 1
           overwrite: true
