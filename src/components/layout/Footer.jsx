@@ -85,14 +85,6 @@ const Footer = () => {
                   Simulator
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/admin"
-                  className="hover:text-brand-blue transition-colors"
-                >
-                  Admin
-                </Link>
-              </li>
             </ul>
           </div>
 
