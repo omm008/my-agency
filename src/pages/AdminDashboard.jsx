@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
+import axios from "axios";
 import logo from "../assets/logo.png";
 import { toast } from "react-toastify";
 import { User, RefreshCcw, Bot, Plus, Trash2, X, Lock } from "lucide-react";
