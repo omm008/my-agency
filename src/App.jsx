@@ -27,7 +27,7 @@ function App() {
 
   useEffect(() => {
     if (window.gtag) {
-      window.gtag("config", "G-S6F6GH4NY6", {
+      window.gtag("config", "G-XNGPZMR7SD", {
         // Use your real ID here
         page_path: location.pathname,
       });
