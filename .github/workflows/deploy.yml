@@ -36,7 +36,8 @@ jobs:
           username: ${{ secrets.SFTP_USERNAME }}
           password: ${{ secrets.SFTP_PASSWORD }}
           port: ${{ secrets.SFTP_PORT }}
-          source: dist/
-          target: public_html/
+          source: "dist/*" # Using wildcard ensures better file matching
+          target: "public_html/"
           strip_components: 1
           overwrite: true
+          timeout: 60s # Give it more time to negotiate the handshake
