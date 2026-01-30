@@ -25,6 +25,15 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 function App() {
   const location = useLocation();
 
+  useEffect(() => {
+    if (window.gtag) {
+      window.gtag("config", "G-S6F6GH4NY6", {
+        // Use your real ID here
+        page_path: location.pathname,
+      });
+    }
+  }, [location]);
+
   // 1. Bot Check for SEO/Performance
   const isBot =
     typeof navigator !== "undefined" &&
